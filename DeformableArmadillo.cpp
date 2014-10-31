@@ -396,6 +396,19 @@ void DeformableArmadillo::advanceSimulation()
 {
     double deltaMs = frameTimer.restart();
     frameTimes.add(deltaMs);
+#ifdef EMSCRIPTEN
+    eCumulativeFrameTime += deltaMs;
+    if (eCumulativeFrameTime > 10. * 1000.) {
+        // Every 10s output stats. This could be improved in the future!
+        LOG(frameTimes.average);
+        LOG(simTimes.average);
+        LOG(defInvTimes.average);
+        LOG(pickingTimes.average);
+        LOG(defRendTimes.average);
+        eCumulativeFrameTime = 0.;
+    }
+#endif
+
     deltaMs = min(deltaMs, 25.); // Prevent the spiral of death!
 
     microTimer.start();

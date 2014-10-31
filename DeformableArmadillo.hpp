@@ -77,6 +77,7 @@ private:
     CpuTimer microTimer;
 #ifdef EMSCRIPTEN
     typedef CpuTimer GpuTimer;
+    double eCumulativeFrameTime = 0.;
 #endif
     GpuTimer defRendTimer;
     SampleStats<float, 50> frameTimes;

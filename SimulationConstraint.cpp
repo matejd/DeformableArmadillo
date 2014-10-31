@@ -1,5 +1,4 @@
 #include "SimulationConstraint.hpp"
-#include <limits>
 
 using namespace glm;
 

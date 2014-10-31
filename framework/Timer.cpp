@@ -14,7 +14,6 @@ void GpuTimer::start()
     if (availablePairs.empty()) {
         glGenQueries(1, &qp.startQuery);
         glGenQueries(1, &qp.endQuery);
-        std::cout << "generated new queries" << std::endl;
     }
     else {
         qp = availablePairs.front();
@@ -42,10 +41,8 @@ double GpuTimer::elapsed()
     // Query just issued is not going to be available just yet.
     // We'll return the oldest available result.
     // On startup, there won't be any available.
-    if (inflightPairs.size() == 1) {
-        std::cout << "Just one query pair!" << std::endl;
+    if (inflightPairs.size() == 1)
         return 0.;
-    }
 
     // Check if a previously issued query is available. Since startQuery
     // is issued before endQuery, we check endQuery only.
@@ -56,8 +53,10 @@ double GpuTimer::elapsed()
         availablePairs.push(qp);
         inflightPairs.pop();
 
+#ifdef DEBUG
         glGetQueryObjectuiv(qp.startQuery, GL_QUERY_RESULT_AVAILABLE, &queryAvailable);
         ASSERT(queryAvailable == GL_TRUE);
+#endif
 
         GLuint64 startTime, endTime;
         glGetQueryObjectui64v(qp.startQuery, GL_QUERY_RESULT, &startTime);
@@ -67,7 +66,6 @@ double GpuTimer::elapsed()
         return duration;
     }
 
-    std::cout << "returning 0" << std::endl;
     return 0.;
 }
 #endif // EMSCRIPTEN

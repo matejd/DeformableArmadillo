@@ -10,7 +10,7 @@ EM_LIBS = -lGL
 
 linux:
 	mkdir -p bin/linux/
-	clang -g3 -Wall -Wno-missing-prototypes -std=c++11 -o bin/linux/DeformableArmadillo ExampleApp.cpp SimulationConstraint.cpp Forsyth.cpp framework/*.cpp $(INCLUDE) $(LIBS)
+	clang -g3 -Wall -Wno-missing-prototypes -std=c++11 -o bin/linux/DeformableArmadillo DeformableArmadillo.cpp SimulationConstraint.cpp Forsyth.cpp framework/*.cpp $(INCLUDE) $(LIBS)
 
 # Tetrahedralization was moved into a shared library due to gigantic compile times (it's based on CGAL).
 tetra:
@@ -22,8 +22,8 @@ tetra:
 # If you want tetrahedralization, you need to link with the tetra library above.
 linux_with_tetra:
 	mkdir -p bin/linux/
-	clang -g3 -Wall -Wno-missing-prototypes -std=c++11 -o bin/linux/DeformableArmadillo ExampleApp.cpp SimulationConstraint.cpp Forsyth.cpp framework/*.cpp $(TETRA_INCLUDE) $(TETRA_LIBS)
+	clang -g3 -Wall -Wno-missing-prototypes -std=c++11 -o bin/linux/DeformableArmadillo DeformableArmadillo.cpp SimulationConstraint.cpp Forsyth.cpp framework/*.cpp $(TETRA_INCLUDE) $(TETRA_LIBS)
 
 emscripten:
 	mkdir -p bin/emscripten/
-	em++ -o bin/emscripten/DeformableArmadillo.html -O2 -std=c++11 -Wall ExampleApp.cpp SimulationConstraint.cpp framework/*.cpp $(EM_INCLUDE) $(EM_LIBS) --preload-file assets --exclude-file assets/armadillo_decimated.obj
+	em++ -o bin/emscripten/DeformableArmadillo.html -O2 -std=c++11 -Wall DeformableArmadillo.cpp SimulationConstraint.cpp framework/*.cpp $(EM_INCLUDE) $(EM_LIBS) --preload-file assets --exclude-file assets/armadillo_decimated.obj

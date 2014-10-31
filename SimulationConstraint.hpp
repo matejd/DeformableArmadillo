@@ -112,7 +112,7 @@ private:
     void projectTetrahedronConstraint(const TetrahedronConstraint&);
     void projectVolumeConstraint(const VolumeConstraint&);
 
-    friend class ExampleApp;
+    friend class DeformableArmadillo;
 
     // Relevant constants, without const because we want to modify
     // them through AntTweakBar.

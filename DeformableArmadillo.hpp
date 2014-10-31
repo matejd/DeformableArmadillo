@@ -22,10 +22,10 @@ struct DetailVertex
 };
 STATIC_ASSERT(sizeof(DetailVertex) == 8+4);
 
-class ExampleApp: public App
+class DeformableArmadillo: public App
 {
 public:
-    ExampleApp(int argc, char** argv): App(argc, argv) {}
+    DeformableArmadillo(int argc, char** argv): App(argc, argv) {}
 
     virtual bool setup() override;
     virtual bool onEvent(const KeyboardEvent) override;
@@ -39,7 +39,7 @@ private:
     void renderAuxiliaryStuff(const Matrix4& mvp);
 
     const String kInputMeshFile  = "assets/armadillo_decimated.obj"; // Input data.
-    const String kSerializedFile = "assets/armadillo.serialized";    // Serialized ExampleApp.
+    const String kSerializedFile = "assets/armadillo.serialized";    // Serialized DeformableArmadillo.
 
     Tetrahedralization mTetra; // Contains vertices+tetrahedra of tetrahedral tessellation.
     Vector<Matrix4> mInversesOfP; // One matrix per surface tetrahedron.

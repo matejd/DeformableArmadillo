@@ -1,4 +1,4 @@
-#include "ExampleApp.hpp"
+#include "DeformableArmadillo.hpp"
 
 #include <external/glm/gtc/type_ptr.hpp>
 #include <external/glm/gtc/matrix_inverse.hpp>
@@ -24,11 +24,11 @@ using namespace glm;
 
 int main(int argc, char** argv)
 {
-    ExampleApp app(argc, argv);
+    DeformableArmadillo app(argc, argv);
     return app.exec();
 }
 
-bool ExampleApp::setup()
+bool DeformableArmadillo::setup()
 {
 #ifdef DEBUG
     // Catch NaNs and Infs when they are computed.
@@ -293,7 +293,7 @@ bool ExampleApp::setup()
     return true;
 }
 
-bool ExampleApp::onEvent(const KeyboardEvent event)
+bool DeformableArmadillo::onEvent(const KeyboardEvent event)
 {
     if (event.action == KeyAction::Press && event.key == Key::Space) {
         mShowDebugWireframe = !mShowDebugWireframe;
@@ -303,7 +303,7 @@ bool ExampleApp::onEvent(const KeyboardEvent event)
     return false;
 }
 
-bool ExampleApp::onEvent(const MouseEvent event)
+bool DeformableArmadillo::onEvent(const MouseEvent event)
 {
     if (event.action == MouseAction::Move) {
         mMouseX = event.mouseX;
@@ -326,7 +326,7 @@ bool ExampleApp::onEvent(const MouseEvent event)
     return false;
 }
 
-void ExampleApp::checkPicking(const Matrix4& mvp)
+void DeformableArmadillo::checkPicking(const Matrix4& mvp)
 {
     microTimer.start();
     if (mDragging) {
@@ -392,7 +392,7 @@ void ExampleApp::checkPicking(const Matrix4& mvp)
     pickingTimes.add(microTimer.elapsed());
 }
 
-void ExampleApp::advanceSimulation()
+void DeformableArmadillo::advanceSimulation()
 {
     double deltaMs = frameTimer.restart();
     frameTimes.add(deltaMs);
@@ -432,7 +432,7 @@ void ExampleApp::advanceSimulation()
     // We can therefore use the same indices.
 }
 
-void ExampleApp::computeDeformations()
+void DeformableArmadillo::computeDeformations()
 {
     microTimer.start();
     // Compute deformation of each surface tetrahedron. Inverse transposes
@@ -458,7 +458,7 @@ void ExampleApp::computeDeformations()
     defInvTimes.add(microTimer.elapsed());
 }
 
-void ExampleApp::drawFrame()
+void DeformableArmadillo::drawFrame()
 {
     advanceSimulation();
     computeDeformations();
@@ -524,7 +524,7 @@ void ExampleApp::drawFrame()
     renderer.checkGLError();
 }
 
-void ExampleApp::renderAuxiliaryStuff(const Matrix4& mvp)
+void DeformableArmadillo::renderAuxiliaryStuff(const Matrix4& mvp)
 {
     if (mDragging) {
         const Vector<Point3> line{mDragLine[0], mDragLine[1]};

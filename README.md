@@ -42,5 +42,7 @@ Tom Forsyth's Linear-Speed Vertex Cache Optimisation algorithm (implementation b
 
 Glenn Fiedler. Fix your timestep! http://gafferongames.com/game-physics/fix-your-timestep/
 
+Compact Normal Storage: http://aras-p.info/texts/CompactNormalStorage.html
+
 Stanford Armadillo: http://graphics.stanford.edu/data/3Dscanrep/
 (decimated with MeshLab: http://meshlab.sourceforge.net/)

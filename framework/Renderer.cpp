@@ -3,6 +3,8 @@
 #include <GL/glew.h>
 #include <GL/glfw.h>
 
+#include "external/glm/gtc/type_ptr.hpp"
+
 // stblib image loading library, single-file, public domain
 // https://code.google.com/p/stblib/
 #define STBI_HEADER_FILE_ONLY
@@ -331,6 +333,62 @@ Renderer& Renderer::setUniform2fv(const String& name, int count, const float* co
 {
     Shader* shader = shaders.at(currentShader);
     glUniform2fv(shader->uniforms.at(name), count, value);
+    return *this;
+}
+
+Renderer& Renderer::setUniform3f(const String& name, const Vec3& value)
+{
+    Shader* shader = shaders.at(currentShader);
+    glUniform3f(shader->uniforms.at(name), value.x, value.y, value.z);
+    return *this;
+}
+
+Renderer& Renderer::setUniform4f(const String& name, const Vec4& value)
+{
+    Shader* shader = shaders.at(currentShader);
+    glUniform4f(shader->uniforms.at(name), value.x, value.y, value.z, value.w);
+    return *this;
+}
+
+Renderer& Renderer::setUniform3x3f(const String& name, const Matrix3& value)
+{
+    Shader* shader = shaders.at(currentShader);
+    glUniformMatrix3fv(shader->uniforms.at(name), 1, GL_FALSE, glm::value_ptr(value));
+    return *this;
+}
+
+Renderer& Renderer::setUniform4x4f(const String& name, const Matrix4& value)
+{
+    Shader* shader = shaders.at(currentShader);
+    glUniformMatrix4fv(shader->uniforms.at(name), 1, GL_FALSE, glm::value_ptr(value));
+    return *this;
+}
+
+Renderer& Renderer::setUniform3fv(const String& name, const Vector<Vec3>& values)
+{
+    Shader* shader = shaders.at(currentShader);
+    glUniform3fv(shader->uniforms.at(name), values.size(), glm::value_ptr(values.at(0)));
+    return *this;
+}
+
+Renderer& Renderer::setUniform4fv(const String& name, const Vector<Vec4>& values)
+{
+    Shader* shader = shaders.at(currentShader);
+    glUniform4fv(shader->uniforms.at(name), values.size(), glm::value_ptr(values.at(0)));
+    return *this;
+}
+
+Renderer& Renderer::setUniform3x3fv(const String& name, const Vector<Matrix3>& values)
+{
+    Shader* shader = shaders.at(currentShader);
+    glUniformMatrix3fv(shader->uniforms.at(name), values.size(), GL_FALSE, glm::value_ptr(values.at(0)));
+    return *this;
+}
+
+Renderer& Renderer::setUniform4x4fv(const String& name, const Vector<Matrix4>& values)
+{
+    Shader* shader = shaders.at(currentShader);
+    glUniformMatrix4fv(shader->uniforms.at(name), values.size(), GL_FALSE, glm::value_ptr(values.at(0)));
     return *this;
 }
 

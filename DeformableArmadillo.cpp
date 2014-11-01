@@ -497,8 +497,8 @@ void DeformableArmadillo::drawFrame()
     // Render only the armadillo (making shadows).
     renderer.setShader(mDetailMeshShader)
             .setUniform1i("shadowGen", 1)
-            .setUniform4x4fv("lightMvp", 1, glm::value_ptr(lightMvp))
-            .setUniform4x4fv("Qs", mQs.size(), reinterpret_cast<const float*>(&mQs[0][0][0]))
+            .setUniform4x4f("lightMvp", lightMvp)
+            .setUniform4x4fv("Qs", mQs)
             .setInputAssembler(mDetailMeshVB, mDetailMeshVF, mDetailMeshIB)
             .drawIndexedPrimitives(Primitive::Triangle);
 
@@ -510,23 +510,23 @@ void DeformableArmadillo::drawFrame()
 
     defRendTimer.start(); // Measure GPU time.
     renderer.setUniform1i("shadowGen", 0)
-            .setUniform4x4fv("mvp", 1, glm::value_ptr(mvp))
-            .setUniform3fv("lightPosition", 1, glm::value_ptr(lightPosition))
+            .setUniform4x4f("mvp", mvp)
+            .setUniform3f("lightPosition", lightPosition)
             .setUniform1i("shadowSampler", 0)
             .setTexture(0, mShadowTex)
-            .setUniform3fv("camPosition", 1, glm::value_ptr(camPosition))
-            .setUniform3x3fv("tetrahedraITT", mTetrahedraITT.size(), reinterpret_cast<const float*>(&mTetrahedraITT[0][0][0]))
+            .setUniform3f("camPosition", camPosition)
+            .setUniform3x3fv("tetrahedraITT", mTetrahedraITT)
             .drawIndexedPrimitives(Primitive::Triangle);
     defRendTimes.add(defRendTimer.elapsed());
 
     // Draw plane.
     renderer.setShader(mPlaneShader)
-            .setUniform4x4fv("mvp", 1, glm::value_ptr(mvp))
-            .setUniform4x4fv("lightMvp", 1, glm::value_ptr(lightMvp))
+            .setUniform4x4f("mvp", mvp)
+            .setUniform4x4f("lightMvp", lightMvp)
             .setUniform1i("shadowSampler", 0)
             .setTexture(0, mShadowTex)
-            .setUniform3fv("lightPosition", 1, glm::value_ptr(lightPosition))
-            .setUniform3fv("lightDirection", 1, glm::value_ptr(lightDirection))
+            .setUniform3f("lightPosition", lightPosition)
+            .setUniform3f("lightDirection", lightDirection)
             .setUniform1f("lightInnerCosAngle", lightInnerCosAngle)
             .setUniform1f("lightOuterCosAngle", lightOuterCosAngle)
             .setUniform1f("groundY", mSimulation.kGroundHeight)

@@ -5,6 +5,7 @@
 
 /// Inspired heavily by Emil Persson (Humus, http://www.humus.name) and his framework.
 /// This Renderer is a simplified and tweaked version of his code.
+/// It's designed with OpenGL ES 2 (and WebGL 1) in mind.
 
 typedef int TextureID;
 typedef int ShaderID;
@@ -101,6 +102,15 @@ public:
     Renderer& setUniform4fv(const String& name, const int count, const float* const value);
     Renderer& setUniform3x3fv(const String& name, const int count, const float* const value);
     Renderer& setUniform4x4fv(const String& name, const int count, const float* const value);
+    // Type-safe variants:
+    Renderer& setUniform3f(const String& name, const Vec3& value);
+    Renderer& setUniform4f(const String& name, const Vec4& value);
+    Renderer& setUniform3x3f(const String& name, const Matrix3& value);
+    Renderer& setUniform4x4f(const String& name, const Matrix4& value);
+    Renderer& setUniform3fv(const String& name, const Vector<Vec3>& values);
+    Renderer& setUniform4fv(const String& name, const Vector<Vec4>& values);
+    Renderer& setUniform3x3fv(const String& name, const Vector<Matrix3>& values);
+    Renderer& setUniform4x4fv(const String& name, const Vector<Matrix4>& values);
 
     template <typename INDEX>
     IndexBufferID addIndexBuffer(const Vector<INDEX>& indices)

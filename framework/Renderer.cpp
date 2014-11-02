@@ -80,6 +80,7 @@ String getFileContents(const String& filename)
 
 u64 getFileModificationTime(const String& filename)
 {
+    // TODO: other platforms?
     struct stat statInfo;
     int result = stat(filename.c_str(), &statInfo);
     if (result < 0) {
@@ -112,39 +113,18 @@ Renderer& Renderer::checkGLError()
 
 Renderer::Renderer()
 {
+    // Pre-allocate.
+    textures.reserve(8);
+    shaders.reserve(8);
+    renderbuffers.reserve(8);
+    framebuffers.reserve(8);
+    indexBuffers.reserve(8);
+    vertexBuffers.reserve(8);
+    vertexFormats.reserve(8);
 }
 
 Renderer::~Renderer()
 {
-    // TODO: this is silly!
-    //
-    for (Shader* shader: shaders) {
-        delete shader;
-    }
-
-    for (Texture* texture: textures) {
-        delete texture;
-    }
-
-    for (Renderbuffer* renderbuffer: renderbuffers) {
-        delete renderbuffer;
-    }
-
-    for (Framebuffer* framebuffer: framebuffers) {
-        delete framebuffer;
-    }
-
-    for (IndexBuffer* buffer: indexBuffers) {
-        delete buffer;
-    }
-
-    for (VertexBuffer* buffer: vertexBuffers) {
-        delete buffer;
-    }
-
-    for (VertexFormat* format: vertexFormats) {
-        delete format;
-    }
 }
 
 ShaderID Renderer::addShaderFromSource(const String& vsSource, const String& fsSource)
@@ -192,7 +172,7 @@ ShaderID Renderer::addShaderFromSource(const String& vsSource, const String& fsS
 
     // Parse vertex and fragment shader, extract attribute and uniform
     // names. This parsing might fail, should probably be improved
-    // someday.
+    // someday. GLSL parser?
     Vector<String> attributes;
     Vector<String> uniforms;
     for (int i = 0; i < 2; i++) {
@@ -222,20 +202,21 @@ ShaderID Renderer::addShaderFromSource(const String& vsSource, const String& fsS
         }
     }
 
-    Shader* shader = new Shader;
-    shader->id = glCreateProgram();
-    glAttachShader(shader->id, ids[0]);
-    glAttachShader(shader->id, ids[1]);
+    Shader shader;
+    shader.id = glCreateProgram();
+    glAttachShader(shader.id, ids[0]);
+    glAttachShader(shader.id, ids[1]);
     for (int i = 0; i < attributes.size(); i++) {
-        glBindAttribLocation(shader->id, i, attributes[i].c_str());
+        glBindAttribLocation(shader.id, i, attributes[i].c_str());
     }
-    glLinkProgram(shader->id);
+    glLinkProgram(shader.id);
     GLint linked = 0;
-    glGetProgramiv(shader->id, GL_LINK_STATUS, &linked);
+    glGetProgramiv(shader.id, GL_LINK_STATUS, &linked);
     ASSERT(linked);
     for (String name : uniforms) {
-        shader->uniforms[name] = glGetUniformLocation(shader->id, name.c_str());
-        if (shader->uniforms[name] == -1) {
+        shader.uniforms[name] = glGetUniformLocation(shader.id, name.c_str());
+        if (shader.uniforms[name] == -1) {
+            // This might happen when the driver optimizes out unused uniforms!
             std::cout << "Failed to get uniform " << name << " location!" << std::endl;
             ASSERT(false);
         }
@@ -254,6 +235,7 @@ ShaderID Renderer::addShader(const Vector<String>& vsFilenames, const Vector<Str
     std::copy(fsFilenames.begin(), fsFilenames.end(), std::ostream_iterator<String>(ss, " "));
     std::cout << ss.str() << std::endl;
 
+    // Concatenate sources.
     String vsSource = "";
     String fsSource = "";
     for (const String& file: vsFilenames) {
@@ -282,113 +264,98 @@ ShaderID Renderer::addShader(const Vector<String>& vsFilenames, const Vector<Str
 
 Renderer& Renderer::setShader(const ShaderID shader)
 {
-    glUseProgram(shaders.at(shader)->id);
+    glUseProgram(shaders.at(shader).id);
     currentShader = shader;
     return *this;
 }
 
 Renderer& Renderer::setUniform1i(const String& name, const int value)
 {
-    Shader* shader = shaders.at(currentShader);
-    glUniform1i(shader->uniforms.at(name), value);
+    glUniform1i(shaders.at(currentShader).uniforms.at(name), value);
     return *this;
 }
 
 Renderer& Renderer::setUniform1f(const String& name, const float value)
 {
-    Shader* shader = shaders.at(currentShader);
-    glUniform1f(shader->uniforms.at(name), value);
+    glUniform1f(shaders.at(currentShader).uniforms.at(name), value);
     return *this;
 }
 
 Renderer& Renderer::setUniform3x3fv(const String& name, const int count, const float* const value)
 {
-    Shader* shader = shaders.at(currentShader);
-    glUniformMatrix3fv(shader->uniforms.at(name), count, GL_FALSE, value);
+    glUniformMatrix3fv(shaders.at(currentShader).uniforms.at(name), count, GL_FALSE, value);
     return *this;
 }
 
 Renderer& Renderer::setUniform4x4fv(const String& name, const int count, const float* const value)
 {
-    Shader* shader = shaders.at(currentShader);
-    glUniformMatrix4fv(shader->uniforms.at(name), count, GL_FALSE, value);
+    glUniformMatrix4fv(shaders.at(currentShader).uniforms.at(name), count, GL_FALSE, value);
     return *this;
 }
 
 Renderer& Renderer::setUniform3fv(const String& name, int count, const float* const value)
 {
-    Shader* shader = shaders.at(currentShader);
-    glUniform3fv(shader->uniforms.at(name), count, value);
+    glUniform3fv(shaders.at(currentShader).uniforms.at(name), count, value);
     return *this;
 }
 
 Renderer& Renderer::setUniform4fv(const String& name, int count, const float* const value)
 {
-    Shader* shader = shaders.at(currentShader);
-    glUniform4fv(shader->uniforms.at(name), count, value);
+    glUniform4fv(shaders.at(currentShader).uniforms.at(name), count, value);
     return *this;
 }
 
 Renderer& Renderer::setUniform2fv(const String& name, int count, const float* const value)
 {
-    Shader* shader = shaders.at(currentShader);
-    glUniform2fv(shader->uniforms.at(name), count, value);
+    glUniform2fv(shaders.at(currentShader).uniforms.at(name), count, value);
     return *this;
 }
 
 Renderer& Renderer::setUniform3f(const String& name, const Vec3& value)
 {
-    Shader* shader = shaders.at(currentShader);
-    glUniform3f(shader->uniforms.at(name), value.x, value.y, value.z);
+    glUniform3f(shaders.at(currentShader).uniforms.at(name), value.x, value.y, value.z);
     return *this;
 }
 
 Renderer& Renderer::setUniform4f(const String& name, const Vec4& value)
 {
-    Shader* shader = shaders.at(currentShader);
-    glUniform4f(shader->uniforms.at(name), value.x, value.y, value.z, value.w);
+    glUniform4f(shaders.at(currentShader).uniforms.at(name), value.x, value.y, value.z, value.w);
     return *this;
 }
 
 Renderer& Renderer::setUniform3x3f(const String& name, const Matrix3& value)
 {
-    Shader* shader = shaders.at(currentShader);
-    glUniformMatrix3fv(shader->uniforms.at(name), 1, GL_FALSE, glm::value_ptr(value));
+    glUniformMatrix3fv(shaders.at(currentShader).uniforms.at(name), 1, GL_FALSE, glm::value_ptr(value));
     return *this;
 }
 
 Renderer& Renderer::setUniform4x4f(const String& name, const Matrix4& value)
 {
-    Shader* shader = shaders.at(currentShader);
-    glUniformMatrix4fv(shader->uniforms.at(name), 1, GL_FALSE, glm::value_ptr(value));
+    glUniformMatrix4fv(shaders.at(currentShader).uniforms.at(name), 1, GL_FALSE, glm::value_ptr(value));
     return *this;
 }
 
 Renderer& Renderer::setUniform3fv(const String& name, const Vector<Vec3>& values)
 {
-    Shader* shader = shaders.at(currentShader);
-    glUniform3fv(shader->uniforms.at(name), values.size(), glm::value_ptr(values.at(0)));
+    glUniform3fv(shaders.at(currentShader).uniforms.at(name), values.size(), glm::value_ptr(values.at(0)));
     return *this;
 }
 
 Renderer& Renderer::setUniform4fv(const String& name, const Vector<Vec4>& values)
 {
-    Shader* shader = shaders.at(currentShader);
-    glUniform4fv(shader->uniforms.at(name), values.size(), glm::value_ptr(values.at(0)));
+    glUniform4fv(shaders.at(currentShader).uniforms.at(name), values.size(), glm::value_ptr(values.at(0)));
     return *this;
 }
 
 Renderer& Renderer::setUniform3x3fv(const String& name, const Vector<Matrix3>& values)
 {
-    Shader* shader = shaders.at(currentShader);
-    glUniformMatrix3fv(shader->uniforms.at(name), values.size(), GL_FALSE, glm::value_ptr(values.at(0)));
+    glUniformMatrix3fv(shaders.at(currentShader).uniforms.at(name), values.size(), GL_FALSE, glm::value_ptr(values.at(0)));
     return *this;
 }
 
 Renderer& Renderer::setUniform4x4fv(const String& name, const Vector<Matrix4>& values)
 {
-    Shader* shader = shaders.at(currentShader);
-    glUniformMatrix4fv(shader->uniforms.at(name), values.size(), GL_FALSE, glm::value_ptr(values.at(0)));
+    glUniformMatrix4fv(shaders.at(currentShader).uniforms.at(name), values.size(), GL_FALSE, glm::value_ptr(values.at(0)));
     return *this;
 }
 
@@ -552,9 +519,11 @@ TextureID Renderer::addEmptyTexture(const int width, const int height, const Pix
         default: ASSERT(false);
     };
 
-    Texture* tex = new Texture;
-    glGenTextures(1, &tex->id);
-    glBindTexture(GL_TEXTURE_2D, tex->id);
+    Texture newTex;
+    newTex.width = width;
+    newTex.height = height;
+    glGenTextures(1, &newTex.id);
+    glBindTexture(GL_TEXTURE_2D, newTex.id);
 #ifdef EMSCRIPTEN
     // WebGL supported formats: ALPHA, RGB, RGBA, LUMINANCE, LUMINANCE_ALPHA.
     // Internal format must match input format (no conversion is done).
@@ -577,7 +546,7 @@ TextureID Renderer::addEmptyTexture(const int width, const int height, const Pix
 #endif
 
     setTextureFilter(filter);
-    textures.push_back(tex);
+    textures.push_back(newTex);
     return textures.size()-1;
 }
 
@@ -613,15 +582,15 @@ TextureID Renderer::addTexture(const String& filename, const PixelFormat interna
     }
     ASSERT(n == numChannels);
 
-    Texture* tex = new Texture;
-    tex->width = width;
-    tex->height = height;
-    glGenTextures(1, &tex->id);
-    glBindTexture(GL_TEXTURE_2D, tex->id);
+    Texture newTex;
+    newTex.width = width;
+    newTex.height = height;
+    glGenTextures(1, &newTex.id);
+    glBindTexture(GL_TEXTURE_2D, newTex.id);
     glTexImage2D(GL_TEXTURE_2D, 0, glInternal, width, height, 0, glInput, glType, data);
     setTextureFilter(filter);
     stbi_image_free(data);
-    textures.push_back(tex);
+    textures.push_back(newTex);
     return textures.size()-1;
 }
 
@@ -645,37 +614,37 @@ void Renderer::setTextureFilter(const TextureFilter filter)
 Renderer& Renderer::setTexture(const int unit, const TextureID id)
 {
     ASSERT(unit >= 0);
-    Texture* texture = textures.at(id);
     glActiveTexture(GL_TEXTURE0+unit);
-    glBindTexture(GL_TEXTURE_2D, texture->id);
+    glBindTexture(GL_TEXTURE_2D, textures.at(id).id);
     return *this;
 }
 
 FramebufferID Renderer::addFramebuffer()
 {
-    Framebuffer* framebuffer = new Framebuffer;
-    glGenFramebuffers(1, &framebuffer->id);
-    framebuffers.push_back(framebuffer);
+    Framebuffer newFramebuffer;
+    glGenFramebuffers(1, &newFramebuffer.id);
+    framebuffers.push_back(newFramebuffer);
     checkGLError();
     return framebuffers.size()-1;
 }
 
 RenderbufferID Renderer::addRenderbuffer(const int width, const int height, const PixelFormat format)
 {
-    Renderbuffer* renderbuffer = new Renderbuffer;
-    glGenRenderbuffers(1, &renderbuffer->id);
-    glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer->id);
     ASSERT(format == PixelFormat::Depth16);
+
+    Renderbuffer newRenderbuffer;
+    glGenRenderbuffers(1, &newRenderbuffer.id);
+    glBindRenderbuffer(GL_RENDERBUFFER, newRenderbuffer.id);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height);
-    renderbuffers.push_back(renderbuffer);
+    renderbuffers.push_back(newRenderbuffer);
     checkGLError();
     return renderbuffers.size()-1;
 }
 
 Renderer& Renderer::attachTextureToFramebuffer(const FramebufferID framebuffer, const TextureID color)
 {
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffers.at(framebuffer)->id);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textures.at(color)->id, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffers.at(framebuffer).id);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textures.at(color).id, 0);
     checkFramebufferStatus();
     checkGLError();
     return *this;
@@ -683,8 +652,8 @@ Renderer& Renderer::attachTextureToFramebuffer(const FramebufferID framebuffer, 
 
 Renderer& Renderer::attachRenderbufferToFramebuffer(const FramebufferID framebuffer, const RenderbufferID buffer)
 {
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffers.at(framebuffer)->id);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderbuffers.at(buffer)->id);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffers.at(framebuffer).id);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderbuffers.at(buffer).id);
     checkFramebufferStatus();
     checkGLError();
     return *this;
@@ -715,7 +684,7 @@ Renderer& Renderer::setDefaultFramebuffer()
 
 Renderer& Renderer::setFramebuffer(const FramebufferID framebuffer)
 {
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffers.at(framebuffer)->id);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffers.at(framebuffer).id);
     return *this;
 }
 
@@ -732,34 +701,34 @@ Renderer& Renderer::setViewport(const int x, const int y, const int width, const
 //IndexBufferID Renderer::addIndexBuffer(const Vector<unsigned int>& indices)
 IndexBufferID Renderer::addIndexBuffer(const void* const data, const int indexSizeBytes, const int numIndices)
 {
-    IndexBuffer* indexBuffer = new IndexBuffer;
-    indexBuffer->numIndices = numIndices;//indices.size();
-    indexBuffer->indexSizeBytes = indexSizeBytes;
-    glGenBuffers(1, &indexBuffer->id);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer->id);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, numIndices * indexSizeBytes, data, GL_STATIC_DRAW);//indices.size() * sizeof(indices.at(0)), indices.data(), GL_STATIC_DRAW);
+    IndexBuffer newIndexBuffer;
+    newIndexBuffer.numIndices = numIndices;
+    newIndexBuffer.indexSizeBytes = indexSizeBytes;
+    glGenBuffers(1, &newIndexBuffer.id);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, newIndexBuffer.id);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, numIndices * indexSizeBytes, data, GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    indexBuffers.push_back(indexBuffer);
     checkGLError();
+    indexBuffers.push_back(newIndexBuffer);
     return indexBuffers.size()-1;
 }
 
 VertexBufferID Renderer::addVertexBuffer(const void* const data, const int sizeBytes)
 {
-    VertexBuffer* vertexBuffer = new VertexBuffer;
-    glGenBuffers(1, &vertexBuffer->id);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer->id);
+    VertexBuffer newVertexBuffer;
+    glGenBuffers(1, &newVertexBuffer.id);
+    glBindBuffer(GL_ARRAY_BUFFER, newVertexBuffer.id);
     glBufferData(GL_ARRAY_BUFFER, sizeBytes, data, GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    vertexBuffers.push_back(vertexBuffer);
     checkGLError();
+    vertexBuffers.push_back(newVertexBuffer);
     return vertexBuffers.size()-1;
 }
 
 Renderer& Renderer::updateVertexBuffer(const VertexBufferID id, const void* const data, const int sizeBytes)
 {
-    const VertexBuffer* vertexBuffer = vertexBuffers.at(id);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer->id);
+    const VertexBuffer& vertexBuffer = vertexBuffers.at(id);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer.id);
     glBufferData(GL_ARRAY_BUFFER, sizeBytes, data, GL_STATIC_DRAW); // TODO: GL_DYNAMIC?
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     checkGLError();
@@ -768,19 +737,19 @@ Renderer& Renderer::updateVertexBuffer(const VertexBufferID id, const void* cons
 
 VertexFormatID Renderer::addVertexFormat(const Vector<VertexAttrib>& attribs)
 {
-    VertexFormat* vertexFormat = new VertexFormat;
-    vertexFormat->attribs = attribs;
-    vertexFormats.push_back(vertexFormat);
+    VertexFormat newVertexFormat;
+    newVertexFormat.attribs = attribs;
+    vertexFormats.push_back(newVertexFormat);
     return vertexFormats.size()-1;
 }
 
 Renderer& Renderer::setInputAssembler(const VertexBufferID vb, const VertexFormatID vf, const IndexBufferID ib)
 {
-    const VertexBuffer* vertexBuffer = vertexBuffers.at(vb);;
     currentVertexBuffer = vb;
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer->id);
+    const VertexBuffer& vertexBuffer = vertexBuffers.at(vb);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer.id);
 
-    const VertexFormat* vertexFormat = vertexFormats.at(vf);
+    const VertexFormat& vertexFormat = vertexFormats.at(vf);
 
     /// The fact that we need to make sure higher vertex attributes are
     /// disabled at this point probably indicates a bad Renderer design!
@@ -788,7 +757,7 @@ Renderer& Renderer::setInputAssembler(const VertexBufferID vb, const VertexForma
         glDisableVertexAttribArray(i);
 
     int index = 0;
-    for (const VertexAttrib& attrib: vertexFormat->attribs) {
+    for (const VertexAttrib& attrib: vertexFormat.attribs) {
         glEnableVertexAttribArray(index);
         GLenum type;
         switch (attrib.type) {
@@ -806,9 +775,10 @@ Renderer& Renderer::setInputAssembler(const VertexBufferID vb, const VertexForma
     }
 
     if (ib != -1) {
-        IndexBuffer* indexBuffer = indexBuffers.at(ib);
+        // Index buffer is optional.
         currentIndexBuffer = ib;
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer->id);
+        const IndexBuffer& indexBuffer = indexBuffers.at(ib);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.id);
     }
     return *this;
 }
@@ -823,14 +793,14 @@ Renderer& Renderer::drawIndexedPrimitives(const Primitive primitive, const int f
             ASSERT(false);
     };
 
-    const IndexBuffer* indexBuffer = indexBuffers.at(currentIndexBuffer);
+    const IndexBuffer& indexBuffer = indexBuffers.at(currentIndexBuffer);
     int finalNumIndices = numIndices;
     if (numIndices == -1) {
-        finalNumIndices = indexBuffer->numIndices - firstIndex; // Till the end of the index buffer.
+        finalNumIndices = indexBuffer.numIndices - firstIndex; // Till the end of the index buffer.
     }
 
     GLenum indexType = GL_UNSIGNED_BYTE;
-    switch (indexBuffer->indexSizeBytes) {
+    switch (indexBuffer.indexSizeBytes) {
         case sizeof(u8):  indexType = GL_UNSIGNED_BYTE;  break; // TODO: slow?
         case sizeof(u16): indexType = GL_UNSIGNED_SHORT; break;
         case sizeof(u32): indexType = GL_UNSIGNED_INT;   break;
@@ -908,7 +878,7 @@ Renderer& Renderer::liveReloadUpdate()
 #ifndef EMSCRIPTEN
     dontAddToTrackedFiles = true;
     for (auto it = trackedShaderFiles.begin(); it != trackedShaderFiles.end(); ++it) {
-        const ShaderID id        = it->first;
+        const ShaderID id        = it->first; // id is just index into shaders[].
         ShaderTrackingInfo& info = it->second;
         u64 modTime = 0;
         for (const String& name: info.vsFilenames) {
@@ -923,10 +893,8 @@ Renderer& Renderer::liveReloadUpdate()
 
             const ShaderID newId = addShader(info.vsFilenames, info.fsFilenames);
             if (newId != -1) {
-                Shader* previousVersion = shaders[id];
-                delete previousVersion;
                 shaders[id] = shaders[newId];
-                shaders.pop_back();
+                shaders.pop_back(); // newId was added to the back of the shaders.
             }
         }
     }

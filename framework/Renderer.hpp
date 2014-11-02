@@ -23,7 +23,8 @@ struct IndexBuffer;
 struct VertexBuffer;
 struct VertexFormat;
 
-enum class PixelFormat {
+enum class PixelFormat
+{
     R,
     Rg,
     Rgb,
@@ -32,30 +33,35 @@ enum class PixelFormat {
     Depth24
 };
 
-enum class PixelType {
+enum class PixelType
+{
     Ubyte,
     Float
 };
 
-enum class Primitive {
+enum class Primitive
+{
     Triangle,
     Line
 };
 
-enum class TextureFilter {
+enum class TextureFilter
+{
     Nearest,
     Linear,
     Bilinear,
     Trilinear
 };
 
-enum class CullMode {
+enum class CullMode
+{
     None,
     Front,
     Back
 };
 
-enum class VertexAttribType {
+enum class VertexAttribType
+{
     Float,
     Uint16,
     Uint8,
@@ -72,7 +78,8 @@ struct VertexAttrib
     int offsetBytes;
 };
 
-class Renderer {
+class Renderer
+{
 public:
     Renderer();
     ~Renderer();
@@ -112,24 +119,26 @@ public:
     Renderer& setUniform3x3fv(const String& name, const Vector<Matrix3>& values);
     Renderer& setUniform4x4fv(const String& name, const Vector<Matrix4>& values);
 
-    template <typename INDEX>
-    IndexBufferID addIndexBuffer(const Vector<INDEX>& indices)
+    template <typename Index>
+    IndexBufferID addIndexBuffer(const Vector<Index>& indices)
     {
-        STATIC_ASSERT((sizeof(INDEX) == sizeof(u8)) || (sizeof(INDEX) == sizeof(u16)) || (sizeof(INDEX) == sizeof(u32)));
+        STATIC_ASSERT((sizeof(Index) == sizeof(u8))  ||
+                      (sizeof(Index) == sizeof(u16)) ||
+                      (sizeof(Index) == sizeof(u32)));
         // Signed index types are also allowed, but are treated as unsigned!
-        return addIndexBuffer(indices.data(), sizeof(INDEX), indices.size());
+        return addIndexBuffer(indices.data(), sizeof(Index), indices.size());
     }
 
-    template <typename VERTEX>
-    VertexBufferID addVertexBuffer(const Vector<VERTEX>& vertices)
+    template <typename Vertex>
+    VertexBufferID addVertexBuffer(const Vector<Vertex>& vertices)
     {
-        return addVertexBuffer(vertices.data(), sizeof(VERTEX) * vertices.size());
+        return addVertexBuffer(vertices.data(), sizeof(Vertex) * vertices.size());
     }
 
-    template <typename VERTEX>
-    Renderer& updateVertexBuffer(const VertexBufferID id, const Vector<VERTEX>& vertices)
+    template <typename Vertex>
+    Renderer& updateVertexBuffer(const VertexBufferID id, const Vector<Vertex>& vertices)
     {
-        return updateVertexBuffer(id, vertices.data(), sizeof(VERTEX) * vertices.size());
+        return updateVertexBuffer(id, vertices.data(), sizeof(Vertex) * vertices.size());
     }
 
     VertexFormatID addVertexFormat(const Vector<VertexAttrib>& attribs);
@@ -158,15 +167,16 @@ private:
     void setTextureFilter(const TextureFilter);
     void checkFramebufferStatus();
 
-    // TODO: no pointers!
-    Vector<Texture*> textures;
-    Vector<Shader*> shaders;
-    Vector<Renderbuffer*> renderbuffers;
-    Vector<Framebuffer*> framebuffers;
-    Vector<IndexBuffer*> indexBuffers;
-    Vector<VertexBuffer*> vertexBuffers;
-    Vector<VertexFormat*> vertexFormats;
+    Vector<Texture> textures;
+    Vector<Shader> shaders;
+    Vector<Renderbuffer> renderbuffers;
+    Vector<Framebuffer> framebuffers;
+    Vector<IndexBuffer> indexBuffers;
+    Vector<VertexBuffer> vertexBuffers;
+    Vector<VertexFormat> vertexFormats;
 
+    // Live reload on external modification!
+    // Think about other content types (textures?).
     struct ShaderTrackingInfo {
         Vector<String> vsFilenames;
         Vector<String> fsFilenames;

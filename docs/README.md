@@ -3,7 +3,7 @@ Notes
 
 I'm forcing myself to write down some of the ideas I've found in various papers pertaining to position-based
 dynamics. I have to keep reminding myself I will forget all of this stuff *eventually*, so that this is time
-well-spent.
+well-spent. Hopefully these notes are at least vaguely comprehensible.
 
 
 Tetrahedron

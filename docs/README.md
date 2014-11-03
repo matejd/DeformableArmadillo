@@ -27,6 +27,7 @@ particleInvMasses[t.i0] += quarterMass;
 particleInvMasses[t.i1] += quarterMass;
 particleInvMasses[t.i2] += quarterMass;
 particleInvMasses[t.i3] += quarterMass;
+// Masses are inverted (w = 1/m) in a separate loop later.
 ```
 
 

@@ -57,7 +57,7 @@ private:
 bool tetrahedralize(const Vector<Point3>& vertices,
                     const Vector<int>& indices,
                     const TetraParams& params,
-                    Tetrahedralization* tetrahedralization) // Output.
+                    Tetrahedralization* tetrahedralization)
 {
     Tetrahedralization& tetr = *tetrahedralization;
 

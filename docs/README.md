@@ -3,7 +3,7 @@ Notes
 
 I'm forcing myself to write down some of the ideas I've found in various papers pertaining to position-based
 dynamics. I have to keep reminding myself I will forget all of this stuff *eventually*, so that this is time
-well-spent. Hopefully these notes are at least vaguely comprehensible. Code snippets below use glm
+well-spent. Hopefully these notes are at least vaguely comprehensible. Code snippets below use the glm
 library, which mimics GLSL in C++.
 
 
@@ -35,9 +35,93 @@ particleInvMasses[t.i3] += quarterMass;
 Tetrahedral barycentric interpolation
 -------------------------------------
 
+A detailed surface mesh (triangles) is embedded into the coarse simulation mesh. This detailed
+mesh is used for rendering, but could also be used for better collision detection.
+In order to deform it together with the simulation mesh, we can compute the barycentric
+coordinates of each detail vertex with respect to its parent tetrahedron. With barycentric
+coordinates bx, by, bz, bw (real numbers, sum equals 1), and parent tetrahedron vertices x0, x1, x2, x3 (positions),
+the detail vertex position is just a linear combination
+
+```
+x = bx*x0 + by*x1 + bz*x2 + bw*x3
+```
+
+This way, all distortions of the tetrahedra in the simulation mesh are inherited by the detail
+surface mesh. Another benefit is that we only need to upload the simulation mesh changes to the GPU,
+vertex buffer of the detail mesh doesn't change.
+
+To compute barycentric coordinates, the brute force approach is simply solving a system
+of 4 linear equations (one for each dimension of the 3D space, and an additional equation
+ensuring the barycentric coordinates sum to 1). In matrix form:
+
+```
+// tetraIndex = index of the closest surface tetrahedron.
+// mTetra is the Tetrahedralization struct
+const Tetrahedron& tet = mTetra.surfaceTetrahedra.at(tetraIndex);
+const Point4 x0 = Point4(mTetra.vertices.at(tet.i0), 1.f);
+const Point4 x1 = Point4(mTetra.vertices.at(tet.i1), 1.f);
+const Point4 x2 = Point4(mTetra.vertices.at(tet.i2), 1.f);
+const Point4 x3 = Point4(mTetra.vertices.at(tet.i3), 1.f);
+const Matrix4 T(x0, x1, x2, x3);
+const Point4 baryCoords = inverse(T) * Point4(v.x, v.y, v.z, 1.f);
+ASSERT(abs(baryCoords.x + baryCoords.y + baryCoords.z + baryCoords.w - 1.f) < 0.01f);
+```
+
+We placed the positions of the tetrahedron vertices into columns of a 4x4 matrix T
+(1 in the last row). Writing b = (bx,by,bz,bw) and the initial position of the detail
+vertex v = (vx,vy,vz,1), we get
+
+```
+T * b = v
+b = T^-1 * v
+```
+
+Now, barycentric coordinates usually fulfill bi >= 0, but in my case detail vertices
+can be outside of their tetrahedra (each vertex is assigned to the tetrahedron with
+the closest center). I'm storing coordinates as 16-bit signed integers (normalized to [-1,1]
+by the GPU):
+
+```
+DetailVertex dv;
+const float mult = 32767.f / 5.f; // Expand to cover the range of 16-bit signed int.
+dv.bcx = static_cast<i16>(clamp(baryCoords.x, -5.f, 5.f) * mult);
+dv.bcy = static_cast<i16>(clamp(baryCoords.y, -5.f, 5.f) * mult);
+dv.bcz = static_cast<i16>(clamp(baryCoords.z, -5.f, 5.f) * mult);
+dv.bcw = static_cast<i16>(clamp(baryCoords.w, -5.f, 5.f) * mult);
+dv.tetraIndHi = static_cast<u8>(tetraIndex / 256);
+dv.tetraIndLo = static_cast<u8>(tetraIndex % 256);
+ASSERT((static_cast<int>(dv.tetraIndHi)*256 + dv.tetraIndLo) == tetraIndex);
+```
+
+
 
 Deforming normals
 -----------------
+
+```
+for (const Tetrahedron& t: mTetra.surfaceTetrahedra) {
+    const Point4 x0 = Point4(mTetra.vertices.at(t.i0), 1.f);
+    const Point4 x1 = Point4(mTetra.vertices.at(t.i1), 1.f);
+    const Point4 x2 = Point4(mTetra.vertices.at(t.i2), 1.f);
+    const Point4 x3 = Point4(mTetra.vertices.at(t.i3), 1.f);
+    const Matrix4 P(x0, x1, x2, x3);
+    mInversesOfP.push_back(inverse(P));
+}
+```
+
+```
+for (size_t i = 0; i < numSurfaceTetrahedra; ++i) {
+    const Tetrahedron& t = mTetra.surfaceTetrahedra.at(i);
+    const Point4 x0 = Point4(mParticlePositions.at(t.i0), 1.f);
+    const Point4 x1 = Point4(mParticlePositions.at(t.i1), 1.f);
+    const Point4 x2 = Point4(mParticlePositions.at(t.i2), 1.f);
+    const Point4 x3 = Point4(mParticlePositions.at(t.i3), 1.f);
+    const Matrix4 Q(x0, x1, x2, x3);
+    const Matrix4 A = Q * mInversesOfP.at(i);
+    mQs.push_back(Q);
+    mTetrahedraITT.push_back(inverseTranspose(Matrix3(A)));
+}
+```
 
 
 Tetrahedral signed volume constraint in PBD

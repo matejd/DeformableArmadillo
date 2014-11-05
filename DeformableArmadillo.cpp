@@ -275,7 +275,7 @@ bool DeformableArmadillo::setup()
     const Vector<u16> planeIndices{0,2,1, 0,3,2};
     mPlaneVB = renderer.addVertexBuffer(planeVertices);
     mPlaneVF = renderer.addVertexFormat({{2, VertexAttribType::Float, false, sizeof(PlaneVertex), 0},
-                                        {2, VertexAttribType::Float, false, sizeof(PlaneVertex), 2*4}});
+                                         {2, VertexAttribType::Float, false, sizeof(PlaneVertex), 2*4}});
     mPlaneIB = renderer.addIndexBuffer(planeIndices);
     mPlaneShader = renderer.addShader({"assets/plane.vs"}, {"assets/plane.fs"});
 

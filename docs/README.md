@@ -98,6 +98,41 @@ ASSERT((static_cast<int>(dv.tetraIndHi)*256 + dv.tetraIndLo) == tetraIndex);
 Deforming normals
 -----------------
 
+Deformations also distort normals. Going through detail surface triangles
+and recomputing normals would be inefficient. Luckily, there is no need to do that.
+The key fact is that deformations are local per tetrahedron (knowing the deformation
+of the parent tetrahedron is enough). Using the same equation as above, we have
+
+```
+T * b = v
+```
+in undeformed state. Under deformations, T is replaced by Q (new positions
+of tetrahedron vertices) and v by p (new position of detail vertex):
+
+```
+Q * b = p
+```
+
+Since barycentric coordinates stay the same, it follows
+
+```
+p = Q * T^-1 * v
+A = Q * T^-1
+```
+
+Matrix A describes the deformation of the tetrahedron. It has the form
+
+```
+    |       |
+A = |  B   t|
+    |       |
+    |0 0 0 1|
+```
+
+where t is a translation and B contains rotation/scaling.
+Translation is irrelevant for normals, we are only interested in B.
+I store inverses of T (here called P) in a precomputation step:
+
 ```
 for (const Tetrahedron& t: mTetra.surfaceTetrahedra) {
     const Point4 x0 = Point4(mTetra.vertices.at(t.i0), 1.f);
@@ -109,6 +144,9 @@ for (const Tetrahedron& t: mTetra.surfaceTetrahedra) {
 }
 ```
 
+After the physics simulation step is done (each frame), inverse transposes
+of matrices B are computed and relayed to the GPU:
+
 ```
 for (size_t i = 0; i < numSurfaceTetrahedra; ++i) {
     const Tetrahedron& t = mTetra.surfaceTetrahedra.at(i);
@@ -118,10 +156,13 @@ for (size_t i = 0; i < numSurfaceTetrahedra; ++i) {
     const Point4 x3 = Point4(mParticlePositions.at(t.i3), 1.f);
     const Matrix4 Q(x0, x1, x2, x3);
     const Matrix4 A = Q * mInversesOfP.at(i);
-    mQs.push_back(Q);
+    mQs.push_back(Q); // Q * b = new position.
     mTetrahedraITT.push_back(inverseTranspose(Matrix3(A)));
 }
 ```
+
+I found this in Interactive Virtual Materials [Muller, Gross, 2004].
+
 
 
 Tetrahedral signed volume constraint in PBD

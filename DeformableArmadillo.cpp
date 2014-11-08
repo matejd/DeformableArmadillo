@@ -11,16 +11,13 @@
 
 using namespace glm;
 
-//#define MESH_GEN_PHASE
-#ifdef MESH_GEN_PHASE
+#ifdef MESH_GEN_PHASE // Defined by passing -DMESH_GEN_PHASE to the compiler.
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
-
 #include "Tetrahedralization.hpp"
 #include "Forsyth.hpp"
-
-#endif // MESH_GEN_PHASE
+#endif
 
 int main(int argc, char** argv)
 {
@@ -101,11 +98,10 @@ bool DeformableArmadillo::setup()
         mDetailIndices.push_back(static_cast<u16>(newIndex));
     }
 
-    /* If you want to tetrahedralize mesh with CGAL, uncomment lines below. cereal
-     * is used to store the results in a file.
-    TetraParams tetraParams;
-    const bool success = tetrahedralize(assVertices, assIndices, tetraParams, &mTetra);
-    ASSERT(success);*/
+    // If you want to tetrahedralize mesh with CGAL, uncomment lines below. cereal
+    // is used to store temporary results in a file.
+    /*TetraParams tetraParams;
+    mTetra = tetrahedralize(assVertices, assIndices, tetraParams);*/
 
     {
         /*std::ofstream outStream("assets/tetr.tmp", std::ios::binary);
@@ -165,10 +161,6 @@ bool DeformableArmadillo::setup()
         const Point4 baryCoords = inverse(T) * Point4(v.x, v.y, v.z, 1.f);
         ASSERT(abs(baryCoords.x + baryCoords.y + baryCoords.z + baryCoords.w - 1.f) < 0.01f);
         DetailVertex dv;
-        //ASSERT(baryCoords.x >= -5.f && baryCoords.x <= 5.f);
-        //ASSERT(baryCoords.y >= -5.f && baryCoords.y <= 5.f);
-        //ASSERT(baryCoords.z >= -5.f && baryCoords.z <= 5.f);
-        //ASSERT(baryCoords.w >= -5.f && baryCoords.w <= 5.f);
         const float mult = 32767.f / 5.f; // Expand to cover the range of 16-bit signed int.
         dv.bcx = static_cast<i16>(clamp(baryCoords.x, -5.f, 5.f) * mult);
         dv.bcy = static_cast<i16>(clamp(baryCoords.y, -5.f, 5.f) * mult);

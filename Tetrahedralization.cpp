@@ -20,6 +20,7 @@ typedef CGAL::Mesh_criteria_3<MeshTriangulation> MeshCriteria;
 using namespace CGAL::parameters;
 using namespace glm;
 
+/// Builds a CGAL polyhedron out of vertex/index arrays.
 template <class HalfedgeDataStructure>
 class CGALBuilder : public CGAL::Modifier_base<HalfedgeDataStructure>
 {
@@ -54,18 +55,11 @@ private:
     const Vector<int>& indices;
 };
 
-bool tetrahedralize(const Vector<Point3>& vertices,
-                    const Vector<int>& indices,
-                    const TetraParams& params,
-                    Tetrahedralization* tetrahedralization)
+Tetrahedralization tetrahedralize(const Vector<Point3>& vertices,
+                                  const Vector<int>& indices,
+                                  const TetraParams& params)
 {
-    Tetrahedralization& tetr = *tetrahedralization;
-
     ASSERT(indices.size() % 3 == 0);
-    ASSERT(tetr.vertices.size() == 0);
-    ASSERT(tetr.tetrahedra.size() == 0);
-    ASSERT(tetr.surfaceTetrahedra.size() == 0);
-    ASSERT(tetr.surfaceTriangles.size() == 0);
 
     CGALBuilder<Polyhedron::HalfedgeDS> builder(vertices, indices);
     Polyhedron polyhedron;
@@ -80,9 +74,11 @@ bool tetrahedralize(const Vector<Point3>& vertices,
     const MeshComplex mesh = CGAL::make_mesh_3<MeshComplex>(domain, criteria);
     const MeshTriangulation& triangulation = mesh.triangulation();
 
+    Tetrahedralization tetr;
+
     // Go through the tetrahedral tesselation ("triangulation"), extract vertices.
-    Map<MeshTriangulation::Vertex_handle, int> vertMap; // Maps CGAL vertex handles to an index into vertex array (built in this loop).
-    tetr.vertices.reserve(triangulation.number_of_vertices()); // We now the number of vertices, allocate mem just once.
+    Map<MeshTriangulation::Vertex_handle, int> vertMap; // Maps CGAL vertex handle to an index into vertex array (built in this loop).
+    tetr.vertices.reserve(triangulation.number_of_vertices()); // We know the number of vertices, allocate mem just once.
     int vertexIndex = 0;
     for (auto it = triangulation.finite_vertices_begin();
               it != triangulation.finite_vertices_end();
@@ -158,5 +154,5 @@ bool tetrahedralize(const Vector<Point3>& vertices,
         }
     }
 
-    return true;
+    return tetr;
 }

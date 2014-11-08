@@ -22,7 +22,7 @@ tetra:
 # If you want tetrahedralization, you need to link with the tetra library above.
 linux_with_tetra:
 	mkdir -p bin/linux/
-	clang -g3 -Wall -Wno-missing-prototypes -std=c++11 -o bin/linux/DeformableArmadillo DeformableArmadillo.cpp SimulationConstraint.cpp Forsyth.cpp framework/*.cpp $(TETRA_INCLUDE) $(TETRA_LIBS)
+	clang -g3 -DMESH_GEN_PHASE -Wall -Wno-missing-prototypes -std=c++11 -o bin/linux/DeformableArmadillo DeformableArmadillo.cpp SimulationConstraint.cpp Forsyth.cpp framework/*.cpp $(TETRA_INCLUDE) $(TETRA_LIBS)
 
 emscripten:
 	mkdir -p bin/emscripten/

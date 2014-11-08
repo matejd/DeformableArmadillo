@@ -168,6 +168,9 @@ I found this in Interactive Virtual Materials [Muller, Gross, 2004].
 Tetrahedral signed volume constraint in PBD
 -------------------------------------------
 
+I wrote about PBD constraints I used in this demo in a separate [pdf](http://matejd.github.io/DeformableArmadillo/docs/pbd-vector-calculus-gradients.pdf).
+
+
 
 Continuous mechanics in PBD
 ---------------------------

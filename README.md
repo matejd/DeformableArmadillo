@@ -1,8 +1,9 @@
 Deformable Armadillo
 ====================
 
-An experiment in position-based dynamics. The idea was to simulate a deformable object, not necessarily in a completely
-physically-rigorous way, but at least in a physically-plausible way. Online [here](http://matejd.github.io/DeformableArmadillo/bin/emscripten/DeformableArmadillo.html).
+An experiment in position-based dynamics. The idea was to simulate a deformable object (soft body physics), not necessarily in a completely
+physically-rigorous way, but at least in a physically-plausible way. Emscripten build online [here](http://matejd.github.io/DeformableArmadillo/bin/emscripten/DeformableArmadillo.html).
+Click and drag the Armadillo (it's glued to the ground) or click and drag anything else to change the camera position (middle button drag to zoom in/out).
 
 ![Screenshot](http://matejd.github.io/DeformableArmadillo/docs/armadillo-screenshot1.png)
 

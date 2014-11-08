@@ -45,9 +45,8 @@ struct TetraParams
 // and a list of surface triangles is also computed. TetraParams are well documented at
 // http://doc.cgal.org/latest/Mesh_3/index.html#Chapter_3D_Mesh_Generation
 #define EXPORT __attribute__ ((visibility ("default")))
-EXPORT extern bool tetrahedralize(const Vector<Point3>& vertices,
-                                  const Vector<int>& indices,
-                                  const TetraParams& params,
-                                  Tetrahedralization* tetrahedralization); // In-out.
+EXPORT extern Tetrahedralization tetrahedralize(const Vector<Point3>& vertices,
+                                                const Vector<int>& indices,
+                                                const TetraParams& params);
 
 #endif // Tetrahedralization_Hpp
